@@ -44,6 +44,7 @@ type options struct {
 	FcRootPartUUID     string   `long:"root-partition" description:"Root partition UUID"`
 	FcAdditionalDrives []string `long:"add-drive" description:"Path to additional drive, suffixed with :ro or :rw, can be specified multiple times"`
 	FcNicConfig        []string `long:"tap-device" description:"NIC info, specified as DEVICE/MAC, can be specified multiple times"`
+	FcCNINetName       string   `long:"cni-net" description:"CNI network name for setting up vms"`
 	FcVsockDevices     []string `long:"vsock-device" description:"Vsock interface, specified as PATH:CID. Multiple OK"`
 	FcLogFifo          string   `long:"vmm-log-fifo" description:"FIFO for firecracker logs"`
 	FcLogLevel         string   `long:"log-level" description:"vmm log level" default:"Debug"`
@@ -178,6 +179,17 @@ func (opts *options) getNetwork() ([]firecracker.NetworkInterface, error) {
 			}
 			NICs = append(NICs, nic)
 		}
+	} else if len(opts.FcCNINetName) != 0 {
+		allowMMDS := opts.validMetadata != nil
+
+		nic := firecracker.NetworkInterface{
+			CNIConfiguration: &firecracker.CNIConfiguration{
+				NetworkName: opts.FcCNINetName,
+				IfName:      "veth0",
+			},
+			AllowMMDS: allowMMDS,
+		}
+		NICs = append(NICs, nic)
 	}
 	return NICs, nil
 }
